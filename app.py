@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
 import torch
+import io
 
 
 def find_semantically_similar_courses(input_text, course_embeddings, df, model, threshold=0.7, device='cpu'):
@@ -25,9 +26,9 @@ def find_semantically_similar_courses(input_text, course_embeddings, df, model, 
 st.title("Course Description Similarity Finder")
 
 # Inputs
-input_text = st.text_area("Enter a description to compare:", "This is sample text. Replace with whatever is needed.")
-threshold = st.slider("Similarity Threshold", 0.0, 1.0, 0.5)
-output_path = st.text_input("Enter output file path (optional, to save results):", "")
+input_text = st.text_area("Enter a text to compare. This can be a description, a list of keywords, or anything else:", "")
+threshold = st.slider("Similarity Threshold (adjust depending on input)", 0.0, 1.0, 0.3)
+output_path = st.text_input("Enter output file path (optional):", "")
 
 # Load model and data
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -40,12 +41,34 @@ df = pd.read_csv('data/processed_data.csv')
 if st.button("Find Similar Courses"):
     with st.spinner("Computing similarities..."):
         similar_courses_df = find_semantically_similar_courses(input_text, course_embeddings, df, model, threshold, device=device)
+        st.session_state['similar_courses_df'] = similar_courses_df
 
+# Retrieve the results from session state
+if 'similar_courses_df' in st.session_state:
+    similar_courses_df = st.session_state['similar_courses_df']
     st.write(f"Found {len(similar_courses_df)} results.")
+    
+    # Checkbox to hide duplicates
+    hide_duplicates = st.checkbox("Hide duplicate descriptions")
+    if hide_duplicates:
+        similar_courses_df = similar_courses_df.drop_duplicates(subset=['Course Description'])
+
     st.dataframe(similar_courses_df[['Course Title', 'Term ', 'CRN', 'Course Description', 'Similarity']])
 
+    # Save results if output path is provided
     if output_path:
         st.write(f"Saving results to {output_path}...")
         similar_courses_df.to_excel(output_path, sheet_name='Similar Courses', index=False)
         st.write("Results saved successfully!")
 
+    # Download button
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        similar_courses_df.to_excel(writer, sheet_name='Similar Courses', index=False)
+    
+    st.download_button(
+        label="Download results as Excel",
+        data=buffer.getvalue(),
+        file_name='similar_courses.xlsx',
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )

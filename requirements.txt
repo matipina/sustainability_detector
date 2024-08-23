@@ -1,0 +1,5 @@
+streamlit
+pandas
+numpy
+sentence_transformers
+xlsxwriter
