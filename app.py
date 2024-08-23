@@ -25,6 +25,13 @@ def find_semantically_similar_courses(input_text, course_embeddings, df, model, 
 # Streamlit app
 st.title("Course Description Similarity Finder")
 
+# Option to upload a CSV file if not found in the default path
+uploaded_file = st.file_uploader("Upload your processed data CSV file. If no file is uploaded, the default path will be used.", type="csv")
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+else:
+    df = pd.read_csv('data/processed_data.csv')
+
 # Inputs
 input_text = st.text_area("Enter a text to compare. This can be a description, a list of keywords, or anything else:", "")
 threshold = st.slider("Similarity Threshold (adjust depending on input)", 0.0, 1.0, 0.3)
@@ -35,8 +42,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
 
 course_embeddings = torch.tensor(np.load('data/course_embeddings.npy')).to(device)
-df = pd.read_csv('data/processed_data.csv')
-
+    
 # Button to run the similarity search
 if st.button("Find Similar Courses"):
     with st.spinner("Computing similarities..."):

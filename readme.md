@@ -2,6 +2,8 @@
 
 This Streamlit app helps you find semantically similar course descriptions based on a user-provided input. It uses a pre-trained Sentence-BERT model to compute semantic similarities between the input text and a dataset of course descriptions. The app allows you to filter the results based on a similarity threshold and offers options to hide duplicate descriptions and download the results as an Excel file.
 
+Running on `https://sustainabilitydetector.streamlit.app/`
+
 ## Features
 
 - **Input Description**: Enter a text description to compare against the dataset of course descriptions.
